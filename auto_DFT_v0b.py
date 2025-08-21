@@ -183,39 +183,38 @@ if __name__ == "__main__":
     #print("Current directory", str(folder))
     
         if os.path.isdir(folder):
-
             os.chdir(folder)
+            print("Current folder: ", str(folder))
             
             # Look for ChemDraws
-            found_cdxs = look_for_files("cdx",folder)            
+            found_cdxs = look_for_files("cdx")
             
             # Make sure ChemDraws were found
             if found_cdxs:
                 #print("Found ChemDraws", str(found_cdxs))
                 
                 # Loop over .cdxs in the folder
-                for current_file in found_cdxs: # folder/file.cdx
-                    current_dir = current_file.split('/')[0] # folder
-                    filename = current_file.split('/')[1] # file.cdx
+                for current_file in found_cdxs: # file.cdx
+                    filename = current_file
                     file_base = filename.strip('.cdx') # file
                     
                     ###### Run jobs ######
                     print("##### Beginning OpenBabel conversions #####")
                     # Convert to SMILES
-                    smiles_file = f"{current_dir}/{file_base}.smi"
+                    smiles_file = f"{file_base}.smi"
                     run_cmd([OBABEL_PATH, str(current_file), "-O", str(smiles_file)])
                     
                     # Build 3D geometry
-                    mol3d_file = f"{current_dir}/{file_base}.mol"
+                    mol3d_file = f"{file_base}.mol"
                     run_cmd([OBABEL_PATH, str(smiles_file), "-O", str(mol3d_file), "--gen3d"])
                     
                     # Coarse optimization
-                    opt_file = f"{current_dir}/{file_base}_opt.mol"
+                    opt_file = f"{file_base}_opt.mol"
                     run_cmd([OBABEL_PATH, str(mol3d_file), "-O", str(opt_file), "--minimize"])
                     
                     # Read total charge via oreport
-                    run_cmd([OBABEL_PATH, str(current_file), "-oreport", "-O", f"{current_dir}/{file_base}_oreport.txt"])
-                    with open(f"{current_dir}/{file_base}_oreport.txt",'r') as f:
+                    run_cmd([OBABEL_PATH, str(current_file), "-oreport", "-O", f"{file_base}_oreport.txt"])
+                    with open(f"{file_base}_oreport.txt",'r') as f:
                         lines = f.readlines()
                     for i, line in enumerate(lines):
                         if i == 4:
@@ -241,6 +240,9 @@ if __name__ == "__main__":
                     print("ERROR: Please convert to .cdx files and try again.")
                 else:
                     print(f"ERROR: No ChemDraw files found in {folder}.")
+            
+            # Return to working directory
+            os.chdir(working_dir)
     
     
 
