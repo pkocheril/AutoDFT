@@ -184,6 +184,8 @@ if __name__ == "__main__":
     
         if os.path.isdir(folder):
 
+            os.chdir(folder)
+            
             # Look for ChemDraws
             found_cdxs = look_for_files("cdx",folder)            
             
@@ -198,6 +200,7 @@ if __name__ == "__main__":
                     file_base = filename.strip('.cdx') # file
                     
                     ###### Run jobs ######
+                    print("##### Beginning OpenBabel conversions #####")
                     # Convert to SMILES
                     smiles_file = f"{current_dir}/{file_base}.smi"
                     run_cmd([OBABEL_PATH, str(current_file), "-O", str(smiles_file)])
@@ -228,6 +231,7 @@ if __name__ == "__main__":
 
                     # Run Gaussian job
                     if oncluster == 1:
+                        print("##### Beginning Gaussian calculations #####")
                         run_cmd([G16_PATH, str(gjf_path)])
                         print(f"Gaussian calculation on {file_base} completed successfully.")
                     
