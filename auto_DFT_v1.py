@@ -167,9 +167,9 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     if args.cores:
-        cores = args.cores
+        cores = min([31,args.cores]) # don't use more than 31 cores
     if args.mem:
-        ram = math.floor(args.mem)
+        ram = min([190,math.floor(args.mem)]) # don't use more than 190 GB RAM
         
     ########## DFT ##########
     
