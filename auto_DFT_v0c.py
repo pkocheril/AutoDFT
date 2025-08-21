@@ -111,15 +111,15 @@ def make_gjf(mol_path, job_base_name, charge=0, multiplicity=1, cpus=31, memory=
             "checkpoint": f"{job_base_name}_gs",
             "method": "B3LYP",
             "basis": "6-31G(d,p)",
-            "keywords": f"opt freq=(noraman,savenormalmodes) nosymm pop=nbo scrf=({solvent_model},solvent={solvent}) geom=connectivity",
-            "title": f"{job_base_name} ground-state",
+            "keywords": f"opt freq=(noraman,savenormalmodes) nosymm pop=nbo scrf=({solvent_model},solvent={solvent}) geom=allcheck",
+            "title": f"{job_base_name} ground-state", # needs to be geom=allcheck to resume calculation
         },
         {
             "oldcheck": f"{job_base_name}_gs",
             "checkpoint": f"{job_base_name}_ex",
             "method": "B3LYP",
             "basis": "6-31G(d,p)",
-            "keywords": f"opt freq=(noraman,savenormalmodes) td=singlets nosymm pop=nbo scrf=({solvent_model},solvent={solvent}) geom=connectivity",
+            "keywords": f"opt freq=(noraman,savenormalmodes) td=singlets nosymm pop=nbo scrf=({solvent_model},solvent={solvent}) geom=allcheck",
             "title": f"{job_base_name} excited-state",
         },
     ]
@@ -240,6 +240,7 @@ if __name__ == "__main__":
                     print("ERROR: Please convert to .cdx files and try again.")
                 else:
                     print(f"ERROR: No ChemDraw files found in {folder}.")
+            
             
             # Return to working directory
             os.chdir(working_dir)
