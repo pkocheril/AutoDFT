@@ -167,9 +167,9 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     if args.cores:
-        cores = min([31,args.cores]) # don't use more than 31 cores
+        cores = min([31,args.cores])
     if args.mem:
-        ram = min([190,math.floor(args.mem)]) # don't use more than 190 GB RAM
+        ram = min([190,math.floor(args.mem)])
         
     ########## DFT ##########
     
@@ -222,6 +222,8 @@ if __name__ == "__main__":
                             split_charge = charge_line.split(": ")
                             if split_charge[0] == 'TOTAL CHARGE':
                                 mol_charge = int(split_charge[1])
+                                if mol_charge > 4: # from weird parsing errors
+                                    mol_charge = 0
                             else:
                                 mol_charge = 0
                     
