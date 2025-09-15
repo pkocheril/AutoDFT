@@ -249,9 +249,13 @@ if __name__ == "__main__":
                     smiles_file = f"{file_base}.smi"
                     run_cmd([OBABEL_PATH, str(current_file), "-O", str(smiles_file)])
                     
+                    # Build 2D geometry
+                    mol2d_file = f"{file_base}_2d.mol"
+                    run_cmd([OBABEL_PATH, str(smiles_file), "-O", str(mol2d_file), "--gen2d"])
+                    
                     # Build 3D geometry
                     mol3d_file = f"{file_base}.mol"
-                    run_cmd([OBABEL_PATH, str(smiles_file), "-O", str(mol3d_file), "--gen3d"])
+                    run_cmd([OBABEL_PATH, str(mol2d_file), "-O", str(mol3d_file), "--gen3d"])
                     
                     # Coarse optimization
                     opt_file = f"{file_base}_opt.mol"
