@@ -7,7 +7,13 @@ Created on Thu Aug 21 10:39:58 2025
 
 Fully automated batch DFT for FCclasses.
 
-Call as: python (this_script).py --cores $(nproc) --mem $(nmem)
+Call as: python (this_script).py --cores $(nproc) --mem $(nmem) --deuterate F --jobtype gsonly
+
+Optional arguments:
+--cores $(nproc) # number of processor cores
+--mem $(nmem) # available memory in GB
+--deuterate F # atom to replace with deuterium
+--jobtype (gsonly, raman, default) # only do ground-state, Raman, or default (gs+ex for FCclasses)
 """
 
 import os
@@ -58,7 +64,7 @@ def look_for_files(ext, cwd=None):
         found_files = glob.glob(f"*.{ext}")
     return found_files
 
-def make_gjf(mol_path, job_base_name, charge=0, multiplicity=1, cpus=31, memory=190):
+def make_gjf(mol_path, job_base_name, charge=0, multiplicity=1, cpus=31, memory=190, jobtype=None):
     "Generates a .gjf input for molecule parametrization."
     
     mol_file = Path(mol_path)
@@ -97,8 +103,9 @@ def make_gjf(mol_path, job_base_name, charge=0, multiplicity=1, cpus=31, memory=
 
     full_input = ""
 
-    jobs = [
-        {
+    # Define all available job types with descriptive names
+    all_jobs = {
+        "rough_opt": {
             "oldcheck": "",
             "checkpoint": f"{job_base_name}_roughopt",
             "method": "HF",
@@ -106,7 +113,7 @@ def make_gjf(mol_path, job_base_name, charge=0, multiplicity=1, cpus=31, memory=
             "keywords": "opt geom=connectivity", # can't use empirical dispersion here
             "title": f"{job_base_name} HF/STO-3G rough geometry optimization",
         },
-        {
+        "ground_state": {
             "oldcheck": f"{job_base_name}_roughopt",
             "checkpoint": f"{job_base_name}_gs",
             "method": "B3LYP",
@@ -114,7 +121,7 @@ def make_gjf(mol_path, job_base_name, charge=0, multiplicity=1, cpus=31, memory=
             "keywords": f"opt freq=(noraman,savenormalmodes) nosymm pop=nbo scrf=({solvent_model},solvent={solvent}) geom=allcheck",
             "title": f"{job_base_name} ground-state", # needs to be geom=allcheck to resume calculation
         },
-        {
+        "excited_state": {
             "oldcheck": f"{job_base_name}_gs",
             "checkpoint": f"{job_base_name}_ex",
             "method": "B3LYP",
@@ -122,7 +129,26 @@ def make_gjf(mol_path, job_base_name, charge=0, multiplicity=1, cpus=31, memory=
             "keywords": f"opt freq=(noraman,savenormalmodes) td=singlets nosymm pop=nbo scrf=({solvent_model},solvent={solvent}) geom=allcheck",
             "title": f"{job_base_name} excited-state",
         },
-    ]
+        "raman": {
+            "oldcheck": f"{job_base_name}_roughopt",
+            "checkpoint": f"{job_base_name}_gs",
+            "method": "B3LYP",
+            "basis": "6-31G(d,p)",
+            "keywords": f"opt freq=savenormalmodes nosymm pop=nbo scrf=({solvent_model},solvent={solvent}) geom=allcheck",
+            "title": f"{job_base_name} ground-state Raman",
+        },
+    }
+
+    # Define job type configurations
+    job_configs = {
+        "gsonly": ["rough_opt", "ground_state"],
+        "raman": ["rough_opt", "raman"],
+        "default": ["rough_opt", "ground_state", "excited_state"],
+    }
+
+    # Select jobs based on jobtype
+    selected_job_names = job_configs.get(jobtype, job_configs["default"])
+    jobs = [all_jobs[name] for name in selected_job_names]
 
     for i, job in enumerate(jobs):
         link = "\n--link1--\n" if i > 0 else ""
@@ -153,6 +179,16 @@ def make_gjf(mol_path, job_base_name, charge=0, multiplicity=1, cpus=31, memory=
     return input_path
 
 
+def replace_with_deuteriums(gjf_path, target_string="F     ",replace_string="H(iso=2)"):
+    "Replaces target atoms with deuteriums in a Gaussian job file (default is fluorine)."
+
+    with open(gjf_path, 'r') as file:
+        lines = file.readlines()
+    for i, line in enumerate(lines):
+        if line.startswith(target_string):
+            lines[i] = line.replace(target_string, replace_string)
+    with open(gjf_path, 'w') as file:
+        file.writelines(lines)
 
 ################## Main ##################
 
@@ -160,17 +196,26 @@ if __name__ == "__main__":
     
     ########## Input parsing ##########
     
-    # Called as: python (this_script).py --cores $(nproc) --mem $(nmem)
+    # Called as: python (this_script).py --cores $(nproc) --mem $(nmem) --deuterate target_atom --jobtype (gsonly, raman, default)
     parser = argparse.ArgumentParser(description="Determine available computing power.")
     parser.add_argument('--cores', type=int, help='Number of available processing cores.')
     parser.add_argument('--mem', type=float, help='Available memory in GB.')
+    parser.add_argument('--deuterate', type=str, help='Target atom to replace with deuteriums.')
+    parser.add_argument('--jobtype', type=str, help='Job type to run.')
     args = parser.parse_args()
 
     if args.cores:
         cores = min([31,args.cores])
     if args.mem:
         ram = min([190,math.floor(args.mem)])
-        
+    if args.deuterate:
+        deuterate = args.deuterate # atom to replace with deuterium
+        deuterate = deuterate.ljust(5)
+    if args.jobtype:
+        jobtype = args.jobtype
+    else:
+        jobtype = None
+
     ########## DFT ##########
     
     # Get subfolders of current folder
@@ -182,7 +227,8 @@ if __name__ == "__main__":
     
     #print("Current directory", str(folder))
     
-        if os.path.isdir(folder):
+        # Ignore hidden folders (those starting with '.')
+        if os.path.isdir(folder) and not folder.startswith('.'):
             os.chdir(folder)
             print("Current folder: ", str(folder))
             
@@ -195,8 +241,7 @@ if __name__ == "__main__":
                 
                 # Loop over .cdxs in the folder
                 for current_file in found_cdxs: # file.cdx
-                    filename = current_file
-                    file_base = filename.strip('.cdx') # file
+                    file_base = os.path.splitext(current_file)[0]  # remove only the .cdx extension
                     
                     ###### Run jobs ######
                     print("##### Beginning OpenBabel conversions #####")
@@ -214,8 +259,8 @@ if __name__ == "__main__":
                     
                     # Read total charge via oreport
                     run_cmd([OBABEL_PATH, str(current_file), "-oreport", "-O", f"{file_base}_oreport.txt"])
-                    with open(f"{file_base}_oreport.txt",'r') as f:
-                        lines = f.readlines()
+                    with open(f"{file_base}_oreport.txt",'r',errors='ignore') as file:
+                        lines = file.readlines()
                     for i, line in enumerate(lines):
                         if i == 4:
                             charge_line = str(line)
@@ -228,7 +273,12 @@ if __name__ == "__main__":
                                 mol_charge = 0
                     
                     # Make Gaussian job file
-                    gjf_path = make_gjf(opt_file, str(file_base), mol_charge, mol_spin, cores, ram)
+                    gjf_path = make_gjf(opt_file, str(file_base), mol_charge, mol_spin, cores, ram, jobtype)
+
+                    # Replace with deuteriums
+                    if args.deuterate:
+                        replace_with_deuteriums(gjf_path, deuterate)
+                        print(f"Replaced {deuterate} with deuteriums in {gjf_path}")
 
                     # Run Gaussian job
                     if oncluster == 1:
@@ -246,6 +296,5 @@ if __name__ == "__main__":
             
             # Return to working directory
             os.chdir(working_dir)
-    
     
 
