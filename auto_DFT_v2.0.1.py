@@ -134,7 +134,7 @@ def make_gjf(mol_path, job_base_name, charge=0, multiplicity=1, cpus=31, memory=
             "checkpoint": f"{job_base_name}_gs",
             "method": "B3LYP",
             "basis": "6-31G(d,p)",
-            "keywords": f"opt freq=savenormalmodes nosymm pop=nbo scrf=({solvent_model},solvent={solvent}) geom=allcheck",
+            "keywords": f"opt freq=(raman,savenormalmodes) nosymm pop=nbo scrf=({solvent_model},solvent={solvent}) geom=allcheck",
             "title": f"{job_base_name} ground-state Raman",
         },
     }
