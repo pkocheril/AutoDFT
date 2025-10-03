@@ -14,6 +14,11 @@
 
 # LOAD MODULES, INSERT CODE, AND RUN YOUR PROGRAMS HERE
 
-python auto_DFT.py --cores $(nproc) --mem $(nmem) --deuterate F --jobtype raman
+### AutoDFT
+python auto_DFT.py --cores $(nproc) --mem $(nmem)
+
+
+### FCclasses3
+# module load mkl
 # python full_FCC_batch.py
 

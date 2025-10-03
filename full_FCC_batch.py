@@ -3,16 +3,13 @@
 """
 Batch execution and post-processing of FCclasses3 
 with vibrational pre-excitation
-
--- now bundled with AutoDFT
-
-full_FCC_batch history:
 v2 -- added MCD
 v3 -- added EMI
 v4 -- added batch EMI (and FC factor extraction for a target mode)
 v5 -- added preresonance Raman and displacement factors
 v6 -- added reruns
 v7 -- fixed paths for HPC
+v8 -- improved file parsing, added PyBonFIRE plotting
 """
 
 # Import modules
@@ -24,11 +21,13 @@ import matplotlib.pyplot as plt
 import pandas as pd
 import numpy as np
 
+# Custom module
+import pybonfire as bf
 
 ################## Setup ##################
 
 # User variables
-CALC_TYPE = 4 # 0 = OPA/pre-excitation, 1 = MCD, 2 = EMI (no modes), 
+CALC_TYPE = 3 # 0 = OPA/pre-excitation, 1 = MCD, 2 = EMI (no modes), 
 # 3 = batch EMI, 4 = batch RR
 N = 0  # number of normal modes for OPA/pre-excitation
 # Energy range (cm-1) for mode to extract (for batch EMI)
@@ -518,38 +517,38 @@ def FC_extractor():
     #print("All Assignment.dat files processed and saved into 'Extracted_FCfactors.xlsx'.")
 
 
-# def spec_combiner():
-#     """Combines spectra from spec_Int_TI.dat files into a single .csv."""
-#     # Get the current working directory as the parent directory
-#     parent_directory = os.getcwd()
+def spec_combiner():
+    """Combines spectra from spec_Int_TI.dat files into a single .csv."""
+    # Get the current working directory as the parent directory
+    parent_directory = os.getcwd()
     
-#     # Initialize an empty list to hold the data
-#     combined_spectra = pd.DataFrame()  # This will be the final DataFrame with all columns
+    # Initialize an empty list to hold the data
+    combined_spectra = pd.DataFrame()  # This will be the final DataFrame with all columns
     
-#     # Loop through each folder and check for "spec_Int_TI.dat"
-#     for folder in os.listdir(parent_directory):
-#         folder_path = os.path.join(parent_directory, folder)
+    # Loop through each folder and check for "spec_Int_TI.dat"
+    for folder in os.listdir(parent_directory):
+        folder_path = os.path.join(parent_directory, folder)
         
-#         # Check for the spec_Int_TI.dat files
-#         if os.path.isdir(folder_path):
-#             file_path = os.path.join(folder_path, "spec_Int_TI.dat")
+        # Check for the spec_Int_TI.dat files
+        if os.path.isdir(folder_path):
+            file_path = os.path.join(folder_path, "spec_Int_TI.dat")
             
-#             if os.path.exists(file_path):  # If the file exists in the folder
-#                 # Read the data file using sep='\s+'
-#                 df = pd.read_csv(file_path, sep='\s+', header=None, encoding="utf-8-sig")
+            if os.path.exists(file_path):  # If the file exists in the folder
+                # Read the data file using sep='\s+'
+                df = pd.read_csv(file_path, sep='\s+', header=None, encoding="utf-8-sig")
                 
-#                 # Assign column names
-#                 df.columns = ["Energy (eV)", "Intensity"]
+                # Assign column names
+                df.columns = ["Energy (eV)", "Intensity"]
                 
-#                 # Add the folder's Energy and Intensity to the combined DataFrame
-#                 folder_name = os.path.basename(folder_path)  # Get the name of the parent folder
-#                 combined_spectra[f"{folder_name} (eV)"] = df["Energy (eV)"]
-#                 combined_spectra[f"{folder_name} Intensity"] = df["Intensity"]
+                # Add the folder's Energy and Intensity to the combined DataFrame
+                folder_name = os.path.basename(folder_path)  # Get the name of the parent folder
+                combined_spectra[f"{folder_name} (eV)"] = df["Energy (eV)"]
+                combined_spectra[f"{folder_name} Intensity"] = df["Intensity"]
                 
-#     # Save the combined DataFrame to a .csv file
-#     combined_spectra.to_csv("combined_spectra.csv", index=False)
+    # Save the combined DataFrame to a .csv file
+    combined_spectra.to_csv("combined_spectra.csv", index=False)
     
-#     #print("Spectra have been successfully combined and saved as 'combined_spectra.csv'.")
+    #print("Spectra have been successfully combined and saved as 'combined_spectra.csv'.")
 
 
 
@@ -564,7 +563,7 @@ if CALC_TYPE > 2: # batch EMI or RR
     for folder in os.listdir(working_dir): # loop through folders
         if os.path.isdir(folder):
             os.chdir(folder)
-            print("Current folder: ", str(folder))
+            #print("Current folder: ", str(folder))
 
             if os.path.isfile('Assignments.dat') and RERUN == 0:
                 print('FCclasses assignments already present – moving on to next folder.')
@@ -580,160 +579,297 @@ if CALC_TYPE > 2: # batch EMI or RR
     
     print('####### Completed FCclasses processing – now collecting FC factors. #######')
 
-    # Loop through folders and tabulate extracted FC factors
-    newdf = pd.DataFrame()
+    # # Loop through folders and tabulate extracted FC factors
+    # newdf = pd.DataFrame()
+    
+    # for i, folder in enumerate(os.listdir(working_dir)): # loop through folders
+    #     if os.path.isdir(folder):
+    #         os.chdir(folder)
+    #         print("Current folder: ", str(folder))
+    #         newdf.loc[i,'Folder'] = str(folder)
+            
+    #         guess_csv = 'Extracted_FCfactors.csv'
+            
+    #         if os.path.isfile(guess_csv):
+    #             # Read each csv
+    #             df = pd.read_csv(guess_csv)
+    #             count = 0
+                
+    #             # Loop through CSV
+    #             for index, row in df.iterrows():
+                    
+    #                 # Look for mode in specified energy range
+    #                 mode_energy = SCALING_FACTOR*abs(row['En-0-0(cm-1)'])
+    #                 if mode_energy > WMIN and mode_energy < WMAX and row['Nqu2_1'] == 1 and row['Nqu2_2'] == 0 and count < TARGET_MODE_COUNT:
+    #                     #print(row)
+    #                     newdf.loc[i,'ModeNumber'] = row['Osc2_1']
+    #                     newdf.loc[i,'ModeEnergy'] = mode_energy
+    #                     newdf.loc[i,'FCfactor'] = row['FC']
+    #                     count = count + 1 # keep track of added modes
+                
+    #             if count < TARGET_MODE_COUNT: # if not enough modes found
+    #                 print("Not enough modes found – looking through fcc.out frequencies.")
+    #                 # First, try reading log file and looking for mode of interest from IR frequencies
+    #                 if os.path.isfile("fcc.out"):
+    #                     with open("fcc.out", 'r') as f:
+    #                         lines = f.readlines()
+
+    #                     # Locate frequencies
+    #                     freq_start = freq_end = None
+    #                     for j, line in enumerate(lines):
+    #                         if not freq_start and 'FREQUENCIES (cm-1)' in line:
+    #                             freq_start = j + 2
+    #                         if freq_start and not freq_end and 'THERMOCHEMISTRY' in line:
+    #                             freq_end = j - 4
+                        
+    #                     mode_number = None
+    #                     # Look through frequencies
+    #                     for m in range(freq_start, freq_end + 1):
+    #                         if not mode_number:
+    #                             freqline = lines[m].strip()
+    #                             temp = freqline.split()
+    #                             try:
+    #                                 frequency = SCALING_FACTOR*float(temp[1])
+    #                                 mode = int(temp[0])
+    #                             except (ValueError, IndexError):
+    #                                 continue # skip lines are comments, etc.
+    #                             if frequency > WMIN and frequency < WMAX:
+    #                                 mode_number = mode
+    #                                 print(f"Found mode: {frequency} cm–1 (scaled) for {folder}.")
+                        
+    #                     if mode_number:
+    #                         # Return to CSV for combination modes of mode_number
+    #                         for index, row in df.iterrows():
+                                
+    #                             # Look for mode in specified energy range
+    #                             mode_energy = SCALING_FACTOR*abs(row['En-0-0(cm-1)'])
+                                
+    #                             # Check for doubly excited combination modes first
+    #                             if mode_energy > WMIN and mode_energy < WMAX and row['Osc2_1'] == mode_number and row['Nqu2_1'] == 1 and row['Nqu2_2'] == 1 and count < CALC_TYPE:
+    #                                 #print(row)
+    #                                 newdf.loc[i,'ModeNumber'] = row['Osc2_1']
+    #                                 newdf.loc[i,'ModeEnergy'] = mode_energy
+    #                                 newdf.loc[i,'FCfactor'] = row['FC']
+    #                                 newdf.loc[i,'CombMode'] = row['Osc2_2']
+    #                                 newdf.loc[i,'CombQuantum'] = row['Nqu2_2']
+    #                                 count = count + 1 # keep track of added modes
+                            
+    #                         if count < TARGET_MODE_COUNT: # still not enough modes found
+    #                             # Allow any arbitratily excited combination mode
+    #                             for index, row in df.iterrows():
+                                    
+    #                                 # Look for mode in specified energy range
+    #                                 mode_energy = SCALING_FACTOR*abs(row['En-0-0(cm-1)'])
+    #                                 if mode_energy > WMIN and mode_energy < WMAX and row['Osc2_1'] == mode_number and row['Nqu2_1'] == 1 and count < CALC_TYPE:
+    #                                     #print(row)
+    #                                     newdf.loc[i,'ModeNumber'] = row['Osc2_1']
+    #                                     newdf.loc[i,'ModeEnergy'] = mode_energy
+    #                                     newdf.loc[i,'FCfactor'] = row['FC']
+    #                                     newdf.loc[i,'CombMode'] = row['Osc2_2']
+    #                                     newdf.loc[i,'CombQuantum'] = row['Nqu2_2']
+    #                                     count = count + 1 # keep track of added modes
+                            
+    #                     else:
+    #                         print(f"##### No modes found in fcc.out between {WMIN} and {WMAX} cm–1. #####")
+                        
+    #                 else:
+    #                     # Loop through CSV again, allowing any combination modes
+    #                     for index, row in df.iterrows():
+                            
+    #                         # Look for mode in specified energy range
+    #                         mode_energy = SCALING_FACTOR*abs(row['En-0-0(cm-1)'])
+    #                         if mode_energy > WMIN and mode_energy < WMAX and row['Nqu2_1'] == 1 and count < CALC_TYPE:
+    #                             #print(row)
+    #                             newdf.loc[i,'ModeNumber'] = row['Osc2_1']
+    #                             newdf.loc[i,'ModeEnergy'] = mode_energy
+    #                             newdf.loc[i,'FCfactor'] = row['FC']
+    #                             count = count + 1 # keep track of added modes
+            
+    #         # HR -> displacement
+    #         guess_HR = 'HuangRhys.dat'
+    #         if os.path.isfile(guess_HR):
+    #             # Read preRR data file
+    #             with open(guess_HR, 'r') as f:
+    #                 lines = f.readlines()
+                
+    #             for j, line in enumerate(lines):
+    #                 dataline = lines[j].strip()
+    #                 temp = dataline.split()
+    #                 try:
+    #                     modenum = int(temp[0])
+    #                     HRfactor = float(temp[1])
+    #                 except (ValueError, IndexError):
+    #                     continue
+    #                 displacement = np.sqrt(HRfactor*2)
+    #                 if modenum == newdf.loc[i,'ModeNumber']:
+    #                     newdf.loc[i,'Displacement'] = displacement
+                        
+    #         # Pre-resonance Raman
+    #         guess_preRR = 'preRR_Int_ShortTimeDynamics.dat'
+    #         if os.path.isfile(guess_preRR):
+    #             # Read preRR data file
+    #             with open(guess_preRR, 'r') as f:
+    #                 lines = f.readlines()
+                
+    #             for j, line in enumerate(lines):
+    #                 dataline = lines[j].strip()
+    #                 temp = dataline.split()
+    #                 try:
+    #                     frequency = SCALING_FACTOR*float(temp[0])
+    #                     intensity = float(temp[1])
+    #                     if round(frequency) == round(newdf.loc[i,'ModeEnergy']):
+    #                         newdf.loc[i,'PreRR_Int'] = intensity
+    #                 except (ValueError, IndexError):
+    #                     continue
+            
+    #         # Return to working directory for next loop iteration
+    #         os.chdir(working_dir)
+            
+    # print(f"##### Finished extracting FC factors of modes between {WMIN} and {WMAX} cm–1. #####")
+    # newdf.to_csv("Summary_FCfactors.csv", index=False)
+    
+    # plt.plot(newdf['ModeEnergy'], abs(newdf['FCfactor']), 'r.')
+    # plt.xlabel('Mode energy scaled by '+str(SCALING_FACTOR)+' $(cm^{–1})$')
+    # plt.ylabel('|FC factor|')
+    # plt.show()
+    
+    # Extract FC factors but start from IR frequencies
+    newdf2 = pd.DataFrame()
     
     for i, folder in enumerate(os.listdir(working_dir)): # loop through folders
         if os.path.isdir(folder):
             os.chdir(folder)
-            print("Current folder: ", str(folder))
-            newdf.loc[i,'Folder'] = str(folder)
+            #print("Current folder: ", str(folder))
+            newdf2.loc[i,'Folder'] = str(folder)
             
-            guess_csv = 'Extracted_FCfactors.csv'
+            guess_output = 'fcc.out'
             
-            if os.path.isfile(guess_csv):
-                # Read each csv
-                df = pd.read_csv(guess_csv)
-                count = 0
+            if os.path.isfile(guess_output):
+                # Load output file
+                with open(guess_output, 'r') as f:
+                    lines = f.readlines()
                 
-                # Loop through CSV
-                for index, row in df.iterrows():
+                # Look for vibrational frequencies
+                freq_start1 = freq_end1 = freq_start2 = freq_end2 = None
+                for j, line in enumerate(lines):
+                    if not freq_start1 and 'FREQUENCIES (cm-1)' in line:
+                        freq_start1 = j + 2
+                    if freq_start1 and not freq_end1 and 'THERMOCHEMISTRY' in line:
+                        freq_end1 = j - 4
+                    if not freq_start2 and freq_end1 and 'FREQUENCIES (cm-1)' in line:
+                        freq_start2 = j + 2
+                    if freq_start2 and not freq_end2 and 'MINIMINZING DIFFERENCES BETWEEN STATES CARTESIAN GEOMS' in line:
+                        freq_end2 = j - 10
+                        
+                mode_number = None
+                # Look through frequencies
+                for m in range(freq_start1, freq_end1 + 1):
+                    if not mode_number:
+                        freqline = lines[m].strip()
+                        temp = freqline.split()
+                        try:
+                            frequency1 = SCALING_FACTOR*float(temp[1])
+                            mode = int(temp[0])
+                        except (ValueError, IndexError):
+                            continue # skip lines are comments, etc.
+                        if frequency1 > WMIN and frequency1 < WMAX:
+                            mode_number = mode
+                            # print(f"Found mode: {frequency} cm–1 (scaled) for {folder}.")
+                if not mode_number:
+                    print("No modes found within specified frequency range - please check bounds.")
+                else:
+                    # Continue with normal processing
+                    newdf2.loc[i,'ModeNumber'] = mode_number
+                    newdf2.loc[i,'FrequencyState1'] = frequency1
                     
-                    # Look for mode in specified energy range
-                    mode_energy = SCALING_FACTOR*abs(row['En-0-0(cm-1)'])
-                    if mode_energy > WMIN and mode_energy < WMAX and row['Nqu2_1'] == 1 and row['Nqu2_2'] == 0 and count < TARGET_MODE_COUNT:
-                        #print(row)
-                        newdf.loc[i,'ModeNumber'] = row['Osc2_1']
-                        newdf.loc[i,'ModeEnergy'] = mode_energy
-                        newdf.loc[i,'FCfactor'] = row['FC']
-                        count = count + 1 # keep track of added modes
-                
-                if count < TARGET_MODE_COUNT: # if not enough modes found
-                    print("Not enough modes found – looking through fcc.out frequencies.")
-                    # First, try reading log file and looking for mode of interest from IR frequencies
-                    if os.path.isfile("fcc.out"):
-                        with open("fcc.out", 'r') as f:
-                            lines = f.readlines()
-
-                        # Locate frequencies
-                        freq_start = freq_end = None
-                        for j, line in enumerate(lines):
-                            if not freq_start and 'FREQUENCIES (cm-1)' in line:
-                                freq_start = j + 2
-                            if freq_start and not freq_end and 'THERMOCHEMISTRY' in line:
-                                freq_end = j - 4
+                    # Find frequency in State2
+                    frequency2 = None
+                    for m in range(freq_start2, freq_end2 + 1):
+                        if not frequency2:
+                            freqline = lines[m].strip()
+                            temp = freqline.split()
+                            try:
+                                frequency = SCALING_FACTOR*float(temp[1])
+                                mode = int(temp[0])
+                            except (ValueError, IndexError):
+                                continue # skip lines are comments, etc.
+                            if mode == mode_number:
+                                frequency2 = frequency
+                                # print(f"Found mode: {frequency} cm–1 (scaled) for {folder}.")
+                    
+                    newdf2.loc[i,'FrequencyState2'] = frequency2
+                    
+                    if frequency1 and frequency2:
+                        frequency = max(frequency1,frequency2)
+                        newdf2.loc[i,'Frequency'] = frequency
+                    
+                    # FC factors
+                    guess_csv = 'Extracted_FCfactors.csv'
+                    
+                    if os.path.isfile(guess_csv):
+                        # Read csv
+                        df = pd.read_csv(guess_csv)
                         
-                        mode_number = None
-                        # Look through frequencies
-                        for m in range(freq_start, freq_end + 1):
-                            if not mode_number:
-                                freqline = lines[m].strip()
-                                temp = freqline.split()
-                                try:
-                                    frequency = SCALING_FACTOR*float(temp[1])
-                                    mode = int(temp[0])
-                                except (ValueError, IndexError):
-                                    continue # skip lines are comments, etc.
-                                if frequency > WMIN and frequency < WMAX:
-                                    mode_number = mode
-                                    print(f"Found mode: {frequency} cm–1 (scaled) for {folder}.")
-                        
-                        if mode_number:
-                            # Return to CSV for combination modes of mode_number
-                            for index, row in df.iterrows():
-                                
-                                # Look for mode in specified energy range
-                                mode_energy = SCALING_FACTOR*abs(row['En-0-0(cm-1)'])
-                                
-                                # Check for doubly excited combination modes first
-                                if mode_energy > WMIN and mode_energy < WMAX and row['Osc2_1'] == mode_number and row['Nqu2_1'] == 1 and row['Nqu2_2'] == 1 and count < CALC_TYPE:
-                                    #print(row)
-                                    newdf.loc[i,'ModeNumber'] = row['Osc2_1']
-                                    newdf.loc[i,'ModeEnergy'] = mode_energy
-                                    newdf.loc[i,'FCfactor'] = row['FC']
-                                    newdf.loc[i,'CombMode'] = row['Osc2_2']
-                                    newdf.loc[i,'CombQuantum'] = row['Nqu2_2']
-                                    count = count + 1 # keep track of added modes
-                            
-                            if count < TARGET_MODE_COUNT: # still not enough modes found
-                                # Allow any arbitratily excited combination mode
-                                for index, row in df.iterrows():
-                                    
-                                    # Look for mode in specified energy range
-                                    mode_energy = SCALING_FACTOR*abs(row['En-0-0(cm-1)'])
-                                    if mode_energy > WMIN and mode_energy < WMAX and row['Osc2_1'] == mode_number and row['Nqu2_1'] == 1 and count < CALC_TYPE:
-                                        #print(row)
-                                        newdf.loc[i,'ModeNumber'] = row['Osc2_1']
-                                        newdf.loc[i,'ModeEnergy'] = mode_energy
-                                        newdf.loc[i,'FCfactor'] = row['FC']
-                                        newdf.loc[i,'CombMode'] = row['Osc2_2']
-                                        newdf.loc[i,'CombQuantum'] = row['Nqu2_2']
-                                        count = count + 1 # keep track of added modes
-                            
-                        else:
-                            print(f"##### No modes found in fcc.out between {WMIN} and {WMAX} cm–1. #####")
-                        
-                    else:
-                        # Loop through CSV again, allowing any combination modes
+                        # Loop through CSV
                         for index, row in df.iterrows():
                             
                             # Look for mode in specified energy range
                             mode_energy = SCALING_FACTOR*abs(row['En-0-0(cm-1)'])
-                            if mode_energy > WMIN and mode_energy < WMAX and row['Nqu2_1'] == 1 and count < CALC_TYPE:
-                                #print(row)
-                                newdf.loc[i,'ModeNumber'] = row['Osc2_1']
-                                newdf.loc[i,'ModeEnergy'] = mode_energy
-                                newdf.loc[i,'FCfactor'] = row['FC']
-                                count = count + 1 # keep track of added modes
-            
-            # HR -> displacement
-            guess_HR = 'HuangRhys.dat'
-            if os.path.isfile(guess_HR):
-                # Read preRR data file
-                with open(guess_HR, 'r') as f:
-                    lines = f.readlines()
-                
-                for j, line in enumerate(lines):
-                    dataline = lines[j].strip()
-                    temp = dataline.split()
-                    try:
-                        modenum = int(temp[0])
-                        HRfactor = float(temp[1])
-                    except (ValueError, IndexError):
-                        continue
-                    displacement = np.sqrt(HRfactor*2)
-                    if modenum == newdf.loc[i,'ModeNumber']:
-                        newdf.loc[i,'Displacement'] = displacement
+                            #if mode_energy > WMIN and mode_energy < WMAX and row['Nqu2_1'] == 1 and row['Nqu2_2'] == 0:
+                            if row['Osc2_1'] == mode_number and row['Nqu2_1'] == 1 and row['Nqu2_2'] == 0:
+                                newdf2.loc[i,'FCfactor'] = row['FC']
+                    
+                    # HR factors and displacements
+                    guess_HR = 'HuangRhys.dat'
+                    if os.path.isfile(guess_HR):
+                        # Read HR file as whitespace-delimited data frame
+                        df2 = pd.read_csv(guess_HR, sep='\s+')
+                        df3 = df2.rename(columns={'#':'ModeNumber', 'Mode':'HRfactor'})
                         
-            # Pre-resonance Raman
-            guess_preRR = 'preRR_Int_ShortTimeDynamics.dat'
-            if os.path.isfile(guess_preRR):
-                # Read preRR data file
-                with open(guess_preRR, 'r') as f:
-                    lines = f.readlines()
-                
-                for j, line in enumerate(lines):
-                    dataline = lines[j].strip()
-                    temp = dataline.split()
-                    try:
-                        frequency = SCALING_FACTOR*float(temp[0])
-                        intensity = float(temp[1])
-                        if round(frequency) == round(newdf.loc[i,'ModeEnergy']):
-                            newdf.loc[i,'PreRR_Int'] = intensity
-                    except (ValueError, IndexError):
-                        continue
+                        # Loop through data frame
+                        for index, row in df3.iterrows():
+                            if mode_number == row['ModeNumber']:
+                                HRfactor = row['HRfactor']
+                                if HRfactor < 0:
+                                    print(HRfactor)
+                                    print("Problem folder: ", str(folder))
+                                displacement = np.sqrt(HRfactor*2)
+                                if mode_number == newdf2.loc[i,'ModeNumber']:
+                                    newdf2.loc[i,'HuangRhys'] = HRfactor
+                                    newdf2.loc[i,'Displacement'] = displacement
+
+                    # Pre-resonance Raman
+                    guess_preRR = 'preRR_Int_ShortTimeDynamics.dat'
+                    if os.path.isfile(guess_preRR):
+                        # Read preRR data file
+                        with open(guess_preRR, 'r') as f:
+                            lines = f.readlines()
+                        
+                        for j, line in enumerate(lines):
+                            dataline = lines[j].strip()
+                            temp = dataline.split()
+                            try:
+                                frequency = SCALING_FACTOR*float(temp[0])
+                                intensity = float(temp[1])
+                                if round(frequency) == round(newdf2.loc[i,'Frequency']):
+                                    newdf2.loc[i,'PreRR_Int'] = intensity
+                            except (ValueError, IndexError):
+                                continue
             
             # Return to working directory for next loop iteration
             os.chdir(working_dir)
             
-    print(f"##### Finished extracting FC factors of modes between {WMIN} and {WMAX} cm-1. #####")
-    newdf.to_csv("Summary_FCfactors.csv", index=False)
+    print(f"##### Finished extracting FC factors of modes between {WMIN} and {WMAX} cm–1. #####")
+    newdf2.to_csv("Improved_FCfactors.csv", index=False)
     
+    fig, ax = bf.plot.bfplot()
     
-    plt.plot(newdf['ModeEnergy'], abs(newdf['FCfactor']), 'r.')
-    plt.xlabel('Mode energy scaled by '+str(SCALING_FACTOR)+' $(cm^{–1})$')
-    plt.ylabel('|FC factor|')
+    for i, row in newdf2.iterrows():
+        ax.plot(row['Frequency'], abs(row['FCfactor']**2), marker='o', markersize=8, linewidth=2)
+    ax.set_xlabel_custom('Frequency scaled by '+str(SCALING_FACTOR)+' (cm$^{–1}$)')
+    ax.set_ylabel_custom('|FC factor|$^2$')
     plt.show()
+
 else: # OPA, MCD, or single EMI
     # Executing functions
     batch_run_FCC(N,CALC_TYPE) # run FCclasses

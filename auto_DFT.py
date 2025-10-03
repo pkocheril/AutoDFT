@@ -1,10 +1,6 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-Created on Thu Aug 21 10:39:58 2025
-
-@author: pkocheril
-
 Fully automated batch DFT for FCclasses.
 
 Call as: python (this_script).py --cores $(nproc) --mem $(nmem) --deuterate F --jobtype gsonly
@@ -14,6 +10,10 @@ Optional arguments:
 --mem $(nmem) # available memory in GB
 --deuterate F # atom to replace with deuterium
 --jobtype (gsonly, raman, default) # only do ground-state, Raman, or default (gs+ex for FCclasses)
+
+To-Do
+
+
 """
 
 import os
