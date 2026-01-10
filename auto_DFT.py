@@ -21,6 +21,7 @@ Optional arguments:
 To-do:
 - add FCC IR job option
 - break up batch_FCC_run function
+- explore longer geometry optimizations (allowing more cycles)
 """
 
 # Import modules
@@ -36,8 +37,8 @@ import matplotlib.pyplot as plt
 import pandas as pd
 import numpy as np
 
-# Custom module
-import pybonfire as bf
+# # Custom module
+# import pybonfire as bf
 
 ################## Setup ##################
 
@@ -1152,9 +1153,9 @@ if __name__ == "__main__":
             
             if os.path.isfile(guess_output):
                 # Load output file
-                lines = bf.gen_utils.readlines(guess_output)
-                # with open(guess_output, 'r') as f:
-                #     lines = f.readlines()
+                # lines = bf.gen_utils.readlines(guess_output)
+                with open(guess_output, 'r') as f:
+                    lines = f.readlines()
                 
                 # Look for vibrational frequencies
                 freq_start1 = freq_end1 = freq_start2 = freq_end2 = None
@@ -1272,16 +1273,16 @@ if __name__ == "__main__":
             # Return to working directory for next loop iteration
             os.chdir(working_dir)
 
-    fig, ax = bf.plot.bfplot()
-    for i, row in newdf2.iterrows():
-        if abs(row['FCfactor']**2) > 0 and abs(row['FC00']**2) > 0:
-            FCR = abs(row['FCfactor']**2)/abs(row['FC00']**2)
-            ax.plot(row['Frequency'], FCR, marker='o', markersize=8, linewidth=2)
-            newdf2.loc[i,'FCratio'] = FCR
-    ax.set_xlabel_custom('Frequency scaled by '+str(scaling)+' (cm$^{–1}$)')
-    ax.set_ylabel_custom('FCR')
-    plt.subplots_adjust(left=0.2, right=0.9, top=0.88, bottom=0.19, wspace=0.2, hspace=0.2)
-    plt.show()
+    # fig, ax = bf.plot.bfplot()
+    # for i, row in newdf2.iterrows():
+    #     if abs(row['FCfactor']**2) > 0 and abs(row['FC00']**2) > 0:
+    #         FCR = abs(row['FCfactor']**2)/abs(row['FC00']**2)
+    #         ax.plot(row['Frequency'], FCR, marker='o', markersize=8, linewidth=2)
+    #         newdf2.loc[i,'FCratio'] = FCR
+    # ax.set_xlabel_custom('Frequency scaled by '+str(scaling)+' (cm$^{–1}$)')
+    # ax.set_ylabel_custom('FCR')
+    # plt.subplots_adjust(left=0.2, right=0.9, top=0.88, bottom=0.19, wspace=0.2, hspace=0.2)
+    # plt.show()
     
     newdf2.to_csv("Collected_FCfactors.csv", index=False)
     
@@ -1359,13 +1360,13 @@ modes={mode_number}
                 freqs = freqs[0:max_modes]
                 ir_ints = ir_ints[0:max_modes]
                 
-                # Plot FTIR
-                fig, ax = bf.plot.bfplot()
-                ax.plot(freqs, ir_ints, marker='o', markersize=8, linewidth=2)
-                ax.set_xlabel_custom('Frequency (cm$^{–1}$)')
-                ax.set_ylabel_custom('Intensity')
-                plt.subplots_adjust(left=0.2, right=0.9, top=0.88, bottom=0.19, wspace=0.2, hspace=0.2)
-                plt.show()
+                # # Plot FTIR
+                # fig, ax = bf.plot.bfplot()
+                # ax.plot(freqs, ir_ints, marker='o', markersize=8, linewidth=2)
+                # ax.set_xlabel_custom('Frequency (cm$^{–1}$)')
+                # ax.set_ylabel_custom('Intensity')
+                # plt.subplots_adjust(left=0.2, right=0.9, top=0.88, bottom=0.19, wspace=0.2, hspace=0.2)
+                # plt.show()
                 
                 if not os.path.isdir("OPA"):
                     print("##### Couldn't find OPA results for {folder} - proceeding to next folder. #####")
@@ -1383,13 +1384,13 @@ modes={mode_number}
                     uv_vis = all_spectra[all_spectra['ModeNumber'] == 0]
                     opa_spectra = all_spectra[all_spectra['ModeNumber'] > 0]
                     
-                    # Plot UV-vis
-                    fig, ax = bf.plot.bfplot()
-                    ax.plot(uv_vis['Frequency (cm-1)'], uv_vis['Intensity'], marker='o', markersize=8, linewidth=2)
-                    ax.set_xlabel_custom('Frequency (cm$^{–1}$)')
-                    ax.set_ylabel_custom('Intensity')
-                    plt.subplots_adjust(left=0.2, right=0.9, top=0.88, bottom=0.19, wspace=0.2, hspace=0.2)
-                    plt.show()
+                    # # Plot UV-vis
+                    # fig, ax = bf.plot.bfplot()
+                    # ax.plot(uv_vis['Frequency (cm-1)'], uv_vis['Intensity'], marker='o', markersize=8, linewidth=2)
+                    # ax.set_xlabel_custom('Frequency (cm$^{–1}$)')
+                    # ax.set_ylabel_custom('Intensity')
+                    # plt.subplots_adjust(left=0.2, right=0.9, top=0.88, bottom=0.19, wspace=0.2, hspace=0.2)
+                    # plt.show()
                     
                     # Crop to pre-resonance regime
                     uvv_peak = uv_vis.loc[uv_vis['Intensity'].idxmax()]
@@ -1418,26 +1419,26 @@ modes={mode_number}
                     # Apply IR frequencies and intensities
                     bfdf['BonFIRE'] = bfdf['IR intensities (km/mol)']*bfdf['Up-conversion intensities']
                     
-                    # Plot BonFIRE
-                    fig, ax = bf.plot.bfplot()
-                    ax.plot(bfdf['IR frequencies (cm-1)'], bfdf['BonFIRE']/bfdf['BonFIRE'] .max(), linewidth=2)
-                    ax.set_xlabel_custom('IR frequency (cm$^{–1}$)')
-                    ax.set_ylabel_custom('BonFIRE (AU)')
-                    plt.subplots_adjust(left=0.2, right=0.9, top=0.88, bottom=0.19, wspace=0.2, hspace=0.2)
-                    plt.show()
+                    # # Plot BonFIRE
+                    # fig, ax = bf.plot.bfplot()
+                    # ax.plot(bfdf['IR frequencies (cm-1)'], bfdf['BonFIRE']/bfdf['BonFIRE'] .max(), linewidth=2)
+                    # ax.set_xlabel_custom('IR frequency (cm$^{–1}$)')
+                    # ax.set_ylabel_custom('BonFIRE (AU)')
+                    # plt.subplots_adjust(left=0.2, right=0.9, top=0.88, bottom=0.19, wspace=0.2, hspace=0.2)
+                    # plt.show()
                     
                     # Apply Gaussian broadening
                     bf_spec = pd.DataFrame()
                     bf_spec['Frequency (cm-1)'] = np.linspace(0,3500,7000)
                     bf_spec['BonFIRE'] = gaussian_broadening(bfdf['IR frequencies (cm-1)'], bfdf['BonFIRE'], bf_spec['Frequency (cm-1)'])
                     
-                    # Plot BonFIRE
-                    fig, ax = bf.plot.bfplot()
-                    ax.plot(bf_spec['Frequency (cm-1)']*scaling, bf_spec['BonFIRE']/bf_spec['BonFIRE'].max(), linewidth=2)
-                    ax.set_xlabel_custom('Frequency scaled by '+str(scaling)+' (cm$^{–1}$)')
-                    ax.set_ylabel_custom('BonFIRE (AU)')
-                    plt.subplots_adjust(left=0.2, right=0.9, top=0.88, bottom=0.19, wspace=0.2, hspace=0.2)
-                    plt.show()
+                    # # Plot BonFIRE
+                    # fig, ax = bf.plot.bfplot()
+                    # ax.plot(bf_spec['Frequency (cm-1)']*scaling, bf_spec['BonFIRE']/bf_spec['BonFIRE'].max(), linewidth=2)
+                    # ax.set_xlabel_custom('Frequency scaled by '+str(scaling)+' (cm$^{–1}$)')
+                    # ax.set_ylabel_custom('BonFIRE (AU)')
+                    # plt.subplots_adjust(left=0.2, right=0.9, top=0.88, bottom=0.19, wspace=0.2, hspace=0.2)
+                    # plt.show()
                     
                     # Save data frames
                     bfdf.to_csv('BonFIRE_stick_spectra.csv', index=False)
