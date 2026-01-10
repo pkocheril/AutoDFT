@@ -7,15 +7,18 @@ Written in Python (3.11.13).
 ## Highlights and main functions
 * Requires only an input ChemDraw structure for the molecule of interest
 * Automated 3D geometry building and coarse minimization with OpenBabel
-* Generates a linked job file for Gaussian16, containing:
+* Generates a linked job file for Gaussian16, generally performing:
   * Rough geometry optimization (HF/STO-3G)
-  * Opt+freq DFT (B3LYP/6-31G(d,p))
-  * Opt+freq TD-DFT (B3LYP/6-31G(d,p))
-* Automated vibronic spectrum calculation with FCclasses3
-* Deuteration support (by replacing a specific atom)
+  * Opt+freq DFT (B3LYP/6-31G(d,p)/SMD)
+  * Opt+freq TD-DFT (B3LYP/6-31G(d,p)/SMD)
+* Vibronic spectrum calculation with FCclasses3
+* AutoDFT 2.0: Deuteration support (by replacing a specific atom)
+* Raman scattering spectrum calculations (including pre-resonance Raman)
+* AutoDFT 3.0: Anharmonic calculations specifically for a mode of interest (e.g., nitrile), including resuming from a previous calculation
+* Single-script, fully automated spectrum plotting and printout (including Gaussian broadening to resemble real spectra)
 
 
-## Prerequisites
+## Dependences
 * OpenBabel
 * Gaussian 16
 * Python
@@ -29,18 +32,15 @@ Written in Python (3.11.13).
 * glob
 * argparse
 * math
-
-### Optional Python modules (useful for eventual analysis)
 * pandas
 * matplotlib
 * re
 * numpy
-* openpyxl
 
 Note: the code is currently written assuming Gaussian16 is the available CCP, but it should be readily adapted to Orca, Qchem, etc.
 
 ## First-time setup
-Ensure that the ```$PATH``` and ```$LD_LIBRARY_PATH``` are set appropriately for OpenBabel and FCclasses (point to ```bin/``` and ```lib64/``` folders), and that any requisite libraries/modules are loaded before running.
+Ensure that the ```$PATH``` and ```$LD_LIBRARY_PATH``` are set appropriately for OpenBabel and FCclasses (point to ```bin/``` and ```lib64/``` folders), and that any requisite libraries/modules (e.g., ```openblas``` or ```mkl```) are loaded before running.
 
 In the ```auto_DFT.py``` Python code, you'll also have to update the paths to point to where OpenBabel, FCclasses, Gaussian, etc. are installed on your machine.
 
@@ -77,13 +77,42 @@ No isotopic labels or other unique labels are currently supported. For deuterium
 Calling ```python auto_DFT_v#.py``` will run the code. 
 
 There are also several optional arguments:
+
 * --cores : specify the amount of processor cores available
 * --mem : specify the amount of RAM available
 * --jobtype : specify the calculations to be performed ("raman", "gsonly", or ground+excited state (default))
 * --deuterate : atoms to be replaced by deuterium in the final calculation (e.g., place fluorine atoms at the desired deuterium locations and use ```--deuterate F```)
+* --FCtype : specify the type of FCclasses run to be performed
+* --preexcite : whether to use vibrational pre-excitation (needed for BonFIRE)
+* --Nmodes : the number of modes to pre-excite in (leave unspecified to do all modes)
+* --wmin and --wmax: frequency bounds for analysis of a mode of interest
+* --scaling : set scaling factor for vibrational frequency calculations (for plotting only)
+* --rerunFC : whether to force rerun FCclasses calculations (not supported for OPA)
+
+### Examples
+
+Infrared spectrum calculation:
 
 ```
-> python auto_DFT_v#.py --cores 28 --mem 100 --deuterate F --jobtype raman
+> python auto_DFT.py --cores 28 --mem 100 --jobtype gsonly
+```
+
+Raman scattering calculation for a deuterated probe:
+
+```
+> python auto_DFT.py --cores 28 --mem 100 --deuterate F --jobtype raman
+```
+
+BonFIRE calculation:
+
+```
+> python auto_DFT.py --cores 28 --mem 100 --FCtype OPA --preexcite yes --bonfire yes
+```
+
+Pre-resonance Raman calculation for a nitrile dye:
+
+```
+> python auto_DFT.py --cores 28 --mem 100 --FCtype RR --wmin 2000 --wmax 2400
 ```
 
 For submitting to a cluster, a sample SLURM job file is provided (batch_dft.sh).
@@ -94,3 +123,5 @@ For submitting to a cluster, a sample SLURM job file is provided (batch_dft.sh).
 If you found any of these functions useful, please consider citing this code as:
 
 1. PA Kocheril et al. (in preparation).
+
+Also be sure to properly cite the other packages used in this code (OpenBabel, Gaussian16, FCclasses3, etc.).
