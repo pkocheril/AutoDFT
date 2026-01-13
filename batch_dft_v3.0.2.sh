@@ -18,12 +18,3 @@
 module load mkl
 python auto_DFT_combined.py --cores $(nproc) --mem $(nmem)
 
-
-### AutoDFT
-# python auto_DFT.py --cores $(nproc) --mem $(nmem)
-
-
-### FCclasses3
-# module load mkl
-# python full_FCC_batch.py
-
