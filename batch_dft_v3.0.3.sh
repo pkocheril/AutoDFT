@@ -16,5 +16,5 @@
 
 ### Combined AutoDFT + FCclasses
 module load mkl
-python auto_DFT_combined.py --cores $(nproc) --mem $(nmem)
+python auto_DFT.py --cores $(nproc) --mem $(nmem)
 
