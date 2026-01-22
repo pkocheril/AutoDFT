@@ -21,6 +21,7 @@ Written in Python (3.11.13).
 ## Dependences
 * OpenBabel
 * Gaussian 16
+* FCclasses3
 * Python
 
 
@@ -38,6 +39,7 @@ Written in Python (3.11.13).
 * numpy
 
 Note: the code is currently written assuming Gaussian16 is the available CCP, but it should be readily adapted to Orca, Qchem, etc.
+
 
 ## First-time setup
 Ensure that the ```$PATH``` and ```$LD_LIBRARY_PATH``` are set appropriately for OpenBabel and FCclasses (point to ```bin/``` and ```lib64/``` folders), and that any requisite libraries/modules (e.g., ```openblas``` or ```mkl```) are loaded before running.
@@ -57,7 +59,6 @@ The main code (```auto_DFT.py```) can be called in a folder organized as:
 ```
 Folder/
 ├── auto_DFT.py
-├── full_FCC_batch.py
 └── Subfolder1/
     └── Molecule1.cdx
 └── Subfolder2/
@@ -66,15 +67,16 @@ Folder/
     └── Molecule3.cdx
 ```
 
+
 ## Input structures
 The inputs _must_ be ```.cdx``` files. ```.cdxml``` files are not currently supported.
 
 Be sure that the structures don't have any abbreviated functional groups. For example, a sulfate group can't be abbreviated as -SO3H. The _full connectivity_ must be drawn out.
 
-No isotopic labels or other unique labels are currently supported. For deuterium labeling, use the ```--deuterate``` option (described below).
+No isotopic labels or other unique labels are currently supported in the ```.cdx``` files themselves. For deuterium labeling, use the ```--deuterate``` option (described below).
 
 ## Usage
-Calling ```python auto_DFT_v#.py``` will run the code. 
+At minimum, calling ```python auto_DFT.py``` will run the code. 
 
 There are also several optional arguments:
 
@@ -89,8 +91,8 @@ There are also several optional arguments:
 * --scaling : set scaling factor for vibrational frequency calculations (for plotting only)
 * --rerunFC : whether to force rerun FCclasses calculations (not supported for OPA)
 
-### Examples
 
+### Examples
 Infrared spectrum calculation:
 
 ```
@@ -118,10 +120,9 @@ Pre-resonance Raman calculation for a nitrile dye:
 For submitting to a cluster, a sample SLURM job file is provided (batch_dft.sh).
 
 
-
 # How to cite
-If you found any of these functions useful, please consider citing this code as:
+If you found any of these functions useful, please cite this code as:
 
-1. PA Kocheril et al. (in preparation).
+1. PA Kocheril, RE Leighton, N Naji, D Lee, H Wang, J Du, and L Wei*. Towards accurate predictions of bond-selective fluorescence spectra. DOI: 10.48550/arXiv.2601.11902
 
 Also be sure to properly cite the other packages used in this code (OpenBabel, Gaussian16, FCclasses3, etc.).
