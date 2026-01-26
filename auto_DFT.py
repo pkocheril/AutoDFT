@@ -3,7 +3,7 @@
 """ 
 Fully automated batch DFT and FCclasses for BonFIRE spectrum generation.
 
-Call as: python (this_script).py --cores $(nproc) --mem $(nmem) --deuterate F --jobtype gsonly --FCtype OPA --preexcite yes --Nmodes 1 --wmin 2000 --wmax 2400 --scaling 0.953 --rerunFC no --bonfire yes
+Call as: python (this_script).py --cores $(nproc) --mem $(nmem) --deuterate F --jobtype gsonly --FCtype OPA --preexcite yes --Nmodes 1 --wmin 2000 --wmax 2400 --scaling 0.953 --rerunFC no --anharmonic resumeCN --bonfire yes
 
 Optional arguments:
 --cores $(nproc) # number of processor cores
@@ -17,6 +17,8 @@ Optional arguments:
 --wmax (maximum frequency to extract) (default 2400)
 --scaling (scaling factor for frequencies) # 0.953 for triple bonds, 0.97 for double bonds (default 0.953)
 --rerunFC (yes, no) # whether to rerun FCclasses or not (default no)
+--anharmonic (resumeCN, fromscratch) # whether to run anharmonic calculations (resuming from a previous calculation)
+--bonfire (yes, no) # whether to calculate a BonFIRE spectrum (following OPA with pre-excitation)
 
 To-do:
 - add FCC IR job option
@@ -1008,12 +1010,6 @@ if __name__ == "__main__":
         bonfire = args.bonfire
     else:
         bonfire = "no" # default to no bonfire
-
-    # Testing
-    FCtype = "OPA"
-    Nmodes = "all"
-    preexcite = "yes"
-    bonfire = "yes"
 
     ########## DFT ##########
     print('####### Beginning DFT calculations. #######')
