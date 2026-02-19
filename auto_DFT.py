@@ -1319,7 +1319,7 @@ modes={mode_number}
                     # Parse log and find nitrile
                     freqs = ir_ints = ramans = []
                     freqs, ir_ints, ramans = parse_gaussian_log(guess_log)
-                    for i in range(0,len(freqs)/2):
+                    for i in range(0,int(len(freqs)/2)):
                         if freqs[i] > wmin and freqs[i] < wmax:
                             nitrile_mode = i+1
                     

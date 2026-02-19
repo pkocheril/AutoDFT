@@ -1,0 +1,40 @@
+%nprocshared=31
+%mem=190GB
+%chk=Pyruvate-d3_roughopt.chk
+# HF/STO-3G opt geom=connectivity
+
+Pyruvate-d3 HF/STO-3G rough geometry optimization
+
+0 1
+C      0.950000    -0.011300    -0.162700
+C      0.455600    -1.162000    -0.990200
+O     -0.256200    -2.096300    -0.612700
+C      0.870100    -1.185300    -2.442600
+O      1.564700    -0.351000    -2.979400
+O      0.355700    -2.270700    -3.060200
+H(iso=2)  1.724700     0.900100    -0.803000
+H(iso=2)  1.687800    -0.445900     0.899700
+H(iso=2) -0.087100     0.694100     0.374800
+H     -0.177600    -2.809800    -2.428000
+
+1 2 1.0 7 1.0 8 1.0 9 1.0
+2 3 2.0 4 1.0
+3
+4 5 2.0 6 1.0
+5
+6 10 1.0
+7
+8
+9
+10
+
+
+--link1--
+%nprocshared=31
+%mem=190GB
+%oldchk=Pyruvate-d3_roughopt.chk
+%chk=Pyruvate-d3_gs.chk
+# B3LYP/6-31G(d,p) opt freq=(raman,savenormalmodes) nosymm pop=nbo scrf=(smd,solvent=dmso) geom=allcheck
+
+Pyruvate-d3 ground-state Raman
+
