@@ -52,6 +52,14 @@ Make sure all Python dependencies are installed:
 > pip install pandas matplotlib numpy argparse openpyxl
 ```
 
+### Expected times
+Installation should be fast (<1 min). DFT calculation times can vary widely depending on molecular size and computational resources available. For the demo file of d3-pyruvate (with 31 CPU cores and 190 GB of RAM allocated), the total calculation time was ~1 hour.
+
+### Tested operating systems
+* Red Hat Enterprise Linux (v9.3) - job preparation and execution
+* macOS (v15.7.2) - job preparation only
+
+This code is also expected to work on Windows and Linux, as a MATLAB-installable sub-application.
 
 ## Organization
 The main code (```auto_DFT.py```) can be called in a folder organized as:
