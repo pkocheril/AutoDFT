@@ -316,6 +316,7 @@ COORDS       =   CARTESIAN ; CARTESIAN/INTERNAL
 STATE1_FILE  =   ../../{state1_file}
 STATE2_FILE  =   ../../{state2_file}
 ELDIP_FILE   =   ../../{eldip_file}
+FORCE_REAL   =   YES
 """
 
     # Template for Mode1 to ModeN folders (with pre-excitation)
@@ -337,6 +338,7 @@ STATE2_FILE  =   ../../{state2_file}
 ELDIP_FILE   =   ../../{eldip_file}
 NQMODE_EXC   =   1
 NMODE_EXC    =   {mode_number}
+FORCE_REAL   =   YES
 """
     
     # Template for EMI (state1 and state2 files are flipped, no pre-excitation)
@@ -362,7 +364,7 @@ FORCE_REAL   =   YES
     # Template for MCD - assuming fixed geometries (e.g., from crystal structures)
     fcc_template_MCD = """$$$
 PROPERTY     =   MCD  ; OPA/EMI/ECD/CPL/RR/TPA/TPCD/MCD/IC/NRSC
-MODEL        =   VH   ; AS/ASF/AH/VG/VGF/VH
+MODEL        =   AH   ; AS/ASF/AH/VG/VGF/VH
 DIPOLE       =   {dipole}   ; FC/HTi/HTf
 TEMP         =   0.00 ; (temperature in K) 
 ;DE           = (read) ; (adiabatic/vertical energy in eV. By default, read from state files) 
@@ -398,6 +400,7 @@ STATE1_FILE  =   {state1_file}
 STATE2_FILE  =   {state2_file}
 ELDIP_FILE   =   {eldip_file}
 RR_NFIELD    =   1 ; 9 ; -0.5 through +3.5 eV in 0.5 eV steps 
+FORCE_REAL   =   YES
 """
 
     # Make new folder for calculation type and move there
