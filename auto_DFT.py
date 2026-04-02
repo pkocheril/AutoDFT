@@ -1303,7 +1303,7 @@ if __name__ == "__main__":
 %mem={ram}GB
 %oldchk={file_base}_gs.chk
 %chk={file_base}_anharmCN.chk
-# opt freq=(noraman,savenormalmodes,anharmonic,selectanharmonicmodes) b3lyp/6-31g(d,p) scrf=(smd,solvent=dmso) nosymm pop=nbo geom=allcheck
+# opt freq=(noraman,savenormalmodes,anharmonic,selectanharmonicmodes) b3lyp/6-31g(d,p) scrf=(smd,solvent=dmso) nosymm pop=nbo geom=check guess=read
 
 
 
